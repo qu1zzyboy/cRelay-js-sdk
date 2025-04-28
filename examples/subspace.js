@@ -1,21 +1,19 @@
-import { finalizeEvent, generateSecretKey, getPublicKey } from '../lib/esm/pure.js';
+import { finalizeEvent, finalizeEventBySig, generateSecretKey, getPublicKey, serializeEvent } from '../lib/esm/pure.js';
 import { Relay, useWebSocketImplementation } from '../lib/esm/relay.js';
-import WebSocket from 'ws';
 import {
-    NewSubspaceCreateEvent,
-    ValidateSubspaceCreateEvent,
-    NewSubspaceJoinEvent,
-    ValidateSubspaceJoinEvent,
-    NewSubspaceOpEvent,
-    SetContentType,
-    toNostrEvent,
-    KindSubspaceCreate,
-    ValidateSubspaceOpEvent,
-} from '../lib/esm/subspace.js';
+  NewSubspaceCreateEvent,
+  ValidateSubspaceCreateEvent,
+  NewSubspaceJoinEvent,
+  ValidateSubspaceJoinEvent,
+  toNostrEvent,
+} from '../lib/esm/cip/subspace.js';
+import {KindSubspaceCreate} from '../lib/esm/cip/constants.js'
+import {newPostEvent, newVoteEvent, toNostrEvent as toNostrEventGov} from '../lib/esm/cip/cip01/governance.js'
+import WebSocket from 'ws';
 
 useWebSocketImplementation(WebSocket);
 
-// Connect to the relay for test
+// 0. Connect to the relay for test
 const relayURL = 'ws://161.97.129.166:10547'
 
 const relay = await Relay.connect(relayURL);
@@ -39,7 +37,7 @@ relay.subscribe([
     }
 })
 
-// Create a new subspace
+// 1. Create a new subspace
 const subspaceName = 'TestSubspace';
 const ops = 'post=1,propose=2,vote=3,invite=4';
 const rules = 'rule1';
@@ -50,12 +48,13 @@ const subspaceEvent = NewSubspaceCreateEvent(subspaceName, ops, rules, descripti
 ValidateSubspaceCreateEvent(subspaceEvent);
 
 // Sign and publish the subspace creation event
+// Or use finalizeEventBySig to support 3rd signature
 const signedSubspaceEvent = finalizeEvent(toNostrEvent(subspaceEvent), sk);
 await relay.publish(signedSubspaceEvent);
 console.log('====================================');
 console.log('Subspace creation event published:', signedSubspaceEvent);
 
-// Join the subspace
+// 2. Join the subspace
 const joinEvent = NewSubspaceJoinEvent(subspaceEvent.subspaceID);
 ValidateSubspaceJoinEvent(joinEvent);
 
@@ -65,16 +64,31 @@ await relay.publish(signedJoinEvent);
 console.log('====================================');
 console.log('Subspace join event published:', signedJoinEvent);
 
-// Perform an operation in the subspace
-const opEvent = NewSubspaceOpEvent(subspaceEvent.subspaceID, 'post');
-SetContentType(opEvent, 'text/plain');
-opEvent.content = 'This is a post in the subspace.';
-ValidateSubspaceOpEvent(opEvent);
+// 3. Perform an operation in the subspace(Post)
+const postEvent = await newPostEvent(subspaceEvent.subspaceID, "post")
+if (!postEvent) {
+  throw new Error('Failed to create post event')
+}
+postEvent.setContentType('text/plain')
+postEvent.setParent('0xabcdef1234567890')
 
 // Sign and publish the subspace operation event
-const signedOpEvent = finalizeEvent(toNostrEvent(opEvent), sk);
-await relay.publish(signedOpEvent);
+const signedOpPostEvent = finalizeEvent(toNostrEventGov(postEvent), sk);
+await relay.publish(signedOpPostEvent);
 console.log('====================================');
-console.log('Subspace operation event published:', signedOpEvent);
+console.log('Subspace operation [post] event published:', signedOpPostEvent);
+
+// 4. Perform an operation in the subspace(Vote)
+const voteEvent = await newVoteEvent(subspaceEvent.subspaceID, "vote")
+if (!voteEvent) {
+  throw new Error('Failed to create vote event')
+}
+voteEvent.setVote('0xabcdef1234567890', "yes")
+
+// Sign and publish the subspace operation event
+const signedOpVoteEvent = finalizeEvent(toNostrEventGov(voteEvent), sk);
+await relay.publish(signedOpVoteEvent);
+console.log('====================================');
+console.log('Subspace operation [vote] event published:', signedOpVoteEvent);
 
 relay.close();

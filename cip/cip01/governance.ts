@@ -1,0 +1,291 @@
+import { SubspaceOpEvent, NostrEvent, Tags, NewSubspaceOpEvent } from '../subspace.ts'
+import { getOpFromKind } from '../keys.ts'
+import { AuthTag } from '../auth.ts'
+import { KindGovernancePost, KindGovernancePropose, KindGovernanceVote, KindGovernanceInvite } from '../constants.ts'
+
+// PostEvent represents a post operation in governance subspace
+class PostEvent {
+  SubspaceOpEvent: SubspaceOpEvent
+  ContentType: string
+  ParentHash: string
+
+  constructor(subspaceOpEvent: SubspaceOpEvent) {
+    this.SubspaceOpEvent = subspaceOpEvent
+    this.ContentType = ''
+    this.ParentHash = ''
+  }
+
+  // SetContentType sets the content type for the operation
+  setContentType(contentType: string) {
+    this.ContentType = contentType
+    this.SubspaceOpEvent.tags.push(['content_type', contentType])
+  }
+
+  // SetParent sets the parent event hash
+  setParent(parentHash: string) {
+    this.ParentHash = parentHash
+    this.SubspaceOpEvent.tags.push(['parent', parentHash])
+  }
+}
+
+// ProposeEvent represents a propose operation in governance subspace
+class ProposeEvent {
+  SubspaceOpEvent: SubspaceOpEvent
+  ProposalID: string
+  Rules: string
+
+  constructor(subspaceOpEvent: SubspaceOpEvent) {
+    this.SubspaceOpEvent = subspaceOpEvent
+    this.ProposalID = ''
+    this.Rules = ''
+  }
+
+  // SetProposal sets the proposal ID and rules
+  setProposal(proposalID: string, rules: string) {
+    this.ProposalID = proposalID
+    this.Rules = rules
+    this.SubspaceOpEvent.tags.push(['proposal_id', proposalID])
+    if (rules) {
+      this.SubspaceOpEvent.tags.push(['rules', rules])
+    }
+  }
+}
+
+// VoteEvent represents a vote operation in governance subspace
+class VoteEvent {
+  SubspaceOpEvent: SubspaceOpEvent
+  ProposalID: string
+  Vote: string
+
+  constructor(subspaceOpEvent: SubspaceOpEvent) {
+    this.SubspaceOpEvent = subspaceOpEvent
+    this.ProposalID = ''
+    this.Vote = ''
+  }
+
+  // SetVote sets the vote for a proposal
+  setVote(proposalID: string, vote: string) {
+    this.ProposalID = proposalID
+    this.Vote = vote
+    this.SubspaceOpEvent.tags.push(['proposal_id', proposalID], ['vote', vote])
+  }
+}
+
+// InviteEvent represents an invite operation in governance subspace
+class InviteEvent {
+  SubspaceOpEvent: SubspaceOpEvent
+  InviteePubkey: string
+  Rules: string
+
+  constructor(subspaceOpEvent: SubspaceOpEvent) {
+    this.SubspaceOpEvent = subspaceOpEvent
+    this.InviteePubkey = ''
+    this.Rules = ''
+  }
+
+  // SetInvite sets the invitee pubkey and rules
+  setInvite(inviteePubkey: string, rules: string) {
+    this.InviteePubkey = inviteePubkey
+    this.SubspaceOpEvent.tags.push(['invitee_pubkey', inviteePubkey])
+    if (rules) {
+      this.Rules = rules // Ensure rules are set correctly
+      this.SubspaceOpEvent.tags.push(['rules', rules])
+    }
+  }
+}
+
+// Function to convert Subspace events to Nostr Event
+export function toNostrEvent(event: PostEvent | ProposeEvent | VoteEvent | InviteEvent): NostrEvent {
+  const tags: Tags = event.SubspaceOpEvent.tags
+
+  return {
+    created_at: event.SubspaceOpEvent.createdAt,
+    kind: event.SubspaceOpEvent.kind,
+    tags,
+    content: event.SubspaceOpEvent.content,
+  }
+}
+
+// ParseGovernanceEvent parses a Nostr event into a governance event
+function parseGovernanceEvent(evt: NostrEvent): [SubspaceOpEvent | null, Error | null] {
+  let subspaceID = ''
+  let authTag: AuthTag | undefined
+
+  for (const tag of evt.tags) {
+    if (tag.length < 2) {
+      continue
+    }
+    switch (tag[0]) {
+      case 'sid':
+        subspaceID = tag[1]
+        break
+      case 'auth':
+        try {
+          authTag = AuthTag.parseAuthTag(tag[1])
+        } catch (err) {
+          return [null, new Error(`failed to parse auth tag: ${err}`)]
+        }
+        break
+    }
+  }
+
+  // Get operation from kind
+  const [operation, exists] = getOpFromKind(evt.kind)
+  if (!exists) {
+    return [null, new Error(`unknown kind value: ${evt.kind}`)]
+  }
+
+  // Parse based on operation type
+  switch (operation) {
+    case 'post':
+      return parsePostEvent(evt, subspaceID, operation, authTag)
+    case 'propose':
+      return parseProposeEvent(evt, subspaceID, operation, authTag)
+    case 'vote':
+      return parseVoteEvent(evt, subspaceID, operation, authTag)
+    case 'invite':
+      return parseInviteEvent(evt, subspaceID, operation, authTag)
+    default:
+      return [null, new Error(`unknown operation type: ${operation}`)]
+  }
+}
+
+function parsePostEvent(
+  evt: NostrEvent,
+  subspaceID: string,
+  operation: string,
+  authTag: AuthTag | undefined,
+): [SubspaceOpEvent, Error | null] {
+  const baseEvent = NewSubspaceOpEvent(subspaceID, KindGovernancePost, evt.content)
+  const post = new PostEvent(baseEvent)
+  if (authTag) {
+    baseEvent.authTag = authTag
+  }
+
+  for (const tag of evt.tags) {
+    if (tag.length < 2) {
+      continue
+    }
+    switch (tag[0]) {
+      case 'content_type':
+        post.setContentType(tag[1])
+        break
+      case 'parent':
+        post.setParent(tag[1])
+        break
+    }
+  }
+
+  return [post.SubspaceOpEvent, null]
+}
+
+function parseProposeEvent(
+  evt: NostrEvent,
+  subspaceID: string,
+  operation: string,
+  authTag: AuthTag | undefined,
+): [SubspaceOpEvent, Error | null] {
+  const baseEvent = NewSubspaceOpEvent(subspaceID, KindGovernancePropose, evt.content)
+  const propose = new ProposeEvent(baseEvent)
+  if (authTag) {
+    baseEvent.authTag = authTag
+  }
+
+  for (const tag of evt.tags) {
+    if (tag.length < 2) {
+      continue
+    }
+    switch (tag[0]) {
+      case 'proposal_id':
+        propose.setProposal(tag[1], propose.Rules)
+        break
+      case 'rules':
+        propose.setProposal(propose.ProposalID, tag[1])
+        break
+    }
+  }
+
+  return [propose.SubspaceOpEvent, null]
+}
+
+function parseVoteEvent(
+  evt: NostrEvent,
+  subspaceID: string,
+  operation: string,
+  authTag: AuthTag | undefined,
+): [SubspaceOpEvent, Error | null] {
+  const baseEvent = NewSubspaceOpEvent(subspaceID, KindGovernanceVote, evt.content)
+  const vote = new VoteEvent(baseEvent)
+  if (authTag) {
+    baseEvent.authTag = authTag
+  }
+
+  for (const tag of evt.tags) {
+    if (tag.length < 2) {
+      continue
+    }
+    switch (tag[0]) {
+      case 'proposal_id':
+        vote.setVote(tag[1], vote.Vote)
+        break
+      case 'vote':
+        vote.setVote(vote.ProposalID, tag[1])
+        break
+    }
+  }
+
+  return [vote.SubspaceOpEvent, null]
+}
+
+function parseInviteEvent(
+  evt: NostrEvent,
+  subspaceID: string,
+  operation: string,
+  authTag: AuthTag | undefined,
+): [SubspaceOpEvent, Error | null] {
+  const baseEvent = NewSubspaceOpEvent(subspaceID, KindGovernanceInvite, evt.content)
+  const invite = new InviteEvent(baseEvent)
+  if (authTag) {
+    baseEvent.authTag = authTag
+  }
+
+  for (const tag of evt.tags) {
+    if (tag.length < 2) {
+      continue
+    }
+    switch (tag[0]) {
+      case 'invitee_pubkey':
+        invite.setInvite(tag[1], invite.Rules)
+        break
+      case 'rules':
+        invite.setInvite(invite.InviteePubkey, tag[1])
+        break
+    }
+  }
+
+  return [invite.SubspaceOpEvent, null]
+}
+
+// NewPostEvent creates a new post event
+export async function newPostEvent(subspaceID: string, content: string): Promise<PostEvent | null> {
+  const baseEvent = await NewSubspaceOpEvent(subspaceID, KindGovernancePost, content)
+  return new PostEvent(baseEvent)
+}
+
+// NewProposeEvent creates a new propose event
+export async function newProposeEvent(subspaceID: string, content: string): Promise<ProposeEvent | null> {
+  const baseEvent = await NewSubspaceOpEvent(subspaceID, KindGovernancePropose, content)
+  return new ProposeEvent(baseEvent)
+}
+
+// NewVoteEvent creates a new vote event
+export async function newVoteEvent(subspaceID: string, content: string): Promise<VoteEvent | null> {
+  const baseEvent = await NewSubspaceOpEvent(subspaceID, KindGovernanceVote, content)
+  return new VoteEvent(baseEvent)
+}
+
+// NewInviteEvent creates a new invite event
+export async function newInviteEvent(subspaceID: string, content: string): Promise<InviteEvent | null> {
+  const baseEvent = await NewSubspaceOpEvent(subspaceID, KindGovernanceInvite, content)
+  return new InviteEvent(baseEvent)
+}

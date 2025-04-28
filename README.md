@@ -20,12 +20,18 @@ This integration creates a robust system for secure, decentralized communication
 # bun
 curl -fsSL https://bun.sh/install | bash
 
-# just for linux
-sudo apt install just
+# install just for linux
+curl -LO https://github.com/casey/just/releases/download/1.28.0/just-1.28.0-x86_64-unknown-linux-musl.tar.gz
+tar -xvf just-1.28.0-x86_64-unknown-linux-musl.tar.gz
+sudo mv just /usr/local/bin/
+
 # or for macOS
 brew install just
 
-# npm
+# compile by yourself
+just build
+
+# or install by npm
 npm install --save nostr-tools
 
 # jsr

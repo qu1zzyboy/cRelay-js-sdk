@@ -1,19 +1,18 @@
 const fs = require('node:fs')
 const esbuild = require('esbuild')
-const { join } = require('path')
+const glob = require('glob')
 
-const entryPoints = fs
-  .readdirSync(process.cwd())
-  .filter(
-    file =>
-      file.endsWith('.ts') &&
-      file !== 'core.ts' &&
-      file !== 'test-helpers.ts' &&
-      file !== 'helpers.ts' &&
-      file !== 'benchmarks.ts' &&
-      !file.endsWith('.test.ts') &&
-      fs.statSync(join(process.cwd(), file)).isFile(),
-  )
+const entryPoints = glob.sync('**/*.ts', {
+    ignore: [
+      '**/*.test.ts',
+      'core.ts',
+      'test-helpers.ts',
+      'helpers.ts',
+      'benchmarks.ts',
+      'lib/**',
+      'node_modules/**'
+    ]
+  })
 
 let common = {
   entryPoints,

@@ -28,6 +28,14 @@ class JS implements Nostr {
 
     return event
   }
+  finalizeEventBySig(t: EventTemplate, addr: string, sig: string): VerifiedEvent {
+    const event = t as VerifiedEvent
+    event.pubkey = addr
+    event.id = getEventHash(event)
+    event.sig = sig
+
+    return event
+  }
   verifyEvent(event: Event): event is VerifiedEvent {
     if (typeof event[verifiedSymbol] === 'boolean') return event[verifiedSymbol]
 
@@ -77,5 +85,6 @@ const i: JS = new JS()
 export const generateSecretKey = i.generateSecretKey
 export const getPublicKey = i.getPublicKey
 export const finalizeEvent = i.finalizeEvent
+export const finalizeEventBySig = i.finalizeEventBySig
 export const verifyEvent = i.verifyEvent
 export * from './core.ts'
