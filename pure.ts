@@ -30,9 +30,9 @@ class JS implements Nostr {
   }
   finalizeEventBySig(t: EventTemplate, addr: string, sig: string): VerifiedEvent {
     const event = t as VerifiedEvent
-    event.pubkey = addr
+    event.pubkey = addr.startsWith('0x') ? addr.slice(2) : addr
     event.id = getEventHash(event)
-    event.sig = sig
+    event.sig = sig.startsWith('0x') ? sig.slice(2) : sig
 
     return event
   }

@@ -55,7 +55,7 @@ console.log('====================================');
 console.log('Subspace creation event published:', signedSubspaceEvent);
 
 // 2. Join the subspace
-const joinEvent = NewSubspaceJoinEvent(subspaceEvent.subspaceID);
+const joinEvent = NewSubspaceJoinEvent(subspaceEvent.subspaceID, "Join");
 ValidateSubspaceJoinEvent(joinEvent);
 
 // Sign and publish the subspace join event
