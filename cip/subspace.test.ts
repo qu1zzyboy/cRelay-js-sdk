@@ -8,6 +8,7 @@ import {
   NewSubspaceJoinEvent,
   ValidateSubspaceJoinEvent,
   NewSubspaceOpEvent,
+  setParents,
 } from './subspace.ts'
 
 test('SubspaceCreateEvent: should create a valid event', () => {
@@ -77,10 +78,10 @@ test('SubspaceOpEvent: should set additional properties', async () => {
   }
 
   postEvent.setContentType('text/plain')
-  postEvent.setParent('0xabcdef1234567890')
-
+  postEvent.SubspaceOpEvent
+  setParents(postEvent.SubspaceOpEvent, ['213425955dc44ecd0d12a4af527ab66b71b1b77603a144c2581f8d32826d81ec'])
   expect(postEvent.SubspaceOpEvent.tags).toContainEqual(['content_type', 'text/plain'])
-  expect(postEvent.SubspaceOpEvent.tags).toContainEqual(['parent', '0xabcdef1234567890'])
+  expect(postEvent.SubspaceOpEvent.tags).toContainEqual(['parent', '213425955dc44ecd0d12a4af527ab66b71b1b77603a144c2581f8d32826d81ec'])
 })
 
 test('SubspaceOpEvent: should validate a valid event', () => {
@@ -108,7 +109,7 @@ test('SubspaceOpEvent: should parse a raw event', () => {
       ['sid', '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'],
       ['ops', OpPost],
       ['content_type', 'text/plain'],
-      ['parent', '0xabcdef1234567890'],
+      ['parent', '213425955dc44ecd0d12a4af527ab66b71b1b77603a144c2581f8d32826d81ec'],
       ['proposal_id', 'proposal123'],
     ],
   }

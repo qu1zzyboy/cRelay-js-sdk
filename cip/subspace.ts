@@ -50,6 +50,7 @@ export interface SubspaceOpEvent {
   tags: Tag[]
   content: string
   authTag?: AuthTag
+  parents?: string[]
 }
 
 export function getSubspaceID(event: SubspaceOpEvent): string {
@@ -67,6 +68,20 @@ export function getAuthTag(event: SubspaceOpEvent): AuthTag | undefined {
 export function setAuth(event: SubspaceOpEvent, actionStr: string): void {
   const authTag = AuthTag.parseAuthTag(actionStr)
   event.authTag = authTag
+  let tag: Tag = ["auth", authTag.toString()]
+  event.tags.push(tag)
+}
+
+export function setParents(event: SubspaceOpEvent, parentHashSet: string[]): void {
+  let validParents: string[] = [];
+  for (const parent of parentHashSet) {
+    if (parent.length === 64) {
+      validParents.push(parent);
+    }
+  }
+  event.parents = validParents;
+  let tag: Tag = ["parent", ...validParents]
+  event.tags.push(tag)
 }
 
 export function validateAuthTag(authTag: AuthTag): boolean {

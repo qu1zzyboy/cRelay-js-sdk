@@ -6,6 +6,7 @@ import {
   NewSubspaceJoinEvent,
   ValidateSubspaceJoinEvent,
   toNostrEvent,
+  setParents
 } from '../lib/esm/cip/subspace.js';
 import {KindSubspaceCreate} from '../lib/esm/cip/constants.js'
 import {newPostEvent, newVoteEvent, toNostrEvent as toNostrEventGov} from '../lib/esm/cip/cip01/governance.js'
@@ -70,7 +71,7 @@ if (!postEvent) {
   throw new Error('Failed to create post event')
 }
 postEvent.setContentType('text/plain')
-postEvent.setParent('0xabcdef1234567890')
+setParents(postEvent.SubspaceOpEvent, ['213425955dc44ecd0d12a4af527ab66b71b1b77603a144c2581f8d32826d81ec'])
 
 // Sign and publish the subspace operation event
 const signedOpPostEvent = finalizeEvent(toNostrEventGov(postEvent), sk);
@@ -83,7 +84,7 @@ const voteEvent = await newVoteEvent(subspaceEvent.subspaceID, "vote")
 if (!voteEvent) {
   throw new Error('Failed to create vote event')
 }
-voteEvent.setVote('0xabcdef1234567890', "yes")
+voteEvent.setVote('213425955dc44ecd0d12a4af527ab66b71b1b77603a144c2581f8d32826d81ec', "yes")
 
 // Sign and publish the subspace operation event
 const signedOpVoteEvent = finalizeEvent(toNostrEventGov(voteEvent), sk);

@@ -1,4 +1,4 @@
-import { SubspaceOpEvent, NostrEvent, Tags, NewSubspaceOpEvent } from '../subspace.ts'
+import { SubspaceOpEvent, NostrEvent, Tags, NewSubspaceOpEvent, setParents } from '../subspace.ts'
 import { getOpFromKind } from '../keys.ts'
 import { AuthTag } from '../auth.ts'
 import { KindGovernancePost, KindGovernancePropose, KindGovernanceVote, KindGovernanceInvite } from '../constants.ts'
@@ -7,24 +7,16 @@ import { KindGovernancePost, KindGovernancePropose, KindGovernanceVote, KindGove
 class PostEvent {
   SubspaceOpEvent: SubspaceOpEvent
   ContentType: string
-  ParentHash: string
 
   constructor(subspaceOpEvent: SubspaceOpEvent) {
     this.SubspaceOpEvent = subspaceOpEvent
     this.ContentType = ''
-    this.ParentHash = ''
   }
 
   // SetContentType sets the content type for the operation
   setContentType(contentType: string) {
     this.ContentType = contentType
     this.SubspaceOpEvent.tags.push(['content_type', contentType])
-  }
-
-  // SetParent sets the parent event hash
-  setParent(parentHash: string) {
-    this.ParentHash = parentHash
-    this.SubspaceOpEvent.tags.push(['parent', parentHash])
   }
 }
 
@@ -74,19 +66,19 @@ class VoteEvent {
 // InviteEvent represents an invite operation in governance subspace
 class InviteEvent {
   SubspaceOpEvent: SubspaceOpEvent
-  InviteePubkey: string
+  InviterAddr: string
   Rules: string
 
   constructor(subspaceOpEvent: SubspaceOpEvent) {
     this.SubspaceOpEvent = subspaceOpEvent
-    this.InviteePubkey = ''
+    this.InviterAddr = ''
     this.Rules = ''
   }
 
-  // SetInvite sets the invitee pubkey and rules
-  setInvite(inviteePubkey: string, rules: string) {
-    this.InviteePubkey = inviteePubkey
-    this.SubspaceOpEvent.tags.push(['invitee_pubkey', inviteePubkey])
+  // SetInvite sets the inviter pubkey and rules
+  setInvite(inviterAddress: string, rules: string) {
+    this.InviterAddr = inviterAddress
+    this.SubspaceOpEvent.tags.push(['inviter_addr', inviterAddress])
     if (rules) {
       this.Rules = rules // Ensure rules are set correctly
       this.SubspaceOpEvent.tags.push(['rules', rules])
@@ -110,6 +102,7 @@ export function toNostrEvent(event: PostEvent | ProposeEvent | VoteEvent | Invit
 function parseGovernanceEvent(evt: NostrEvent): [SubspaceOpEvent | null, Error | null] {
   let subspaceID = ''
   let authTag: AuthTag | undefined
+  let parentHash: string[] = []
 
   for (const tag of evt.tags) {
     if (tag.length < 2) {
@@ -126,6 +119,8 @@ function parseGovernanceEvent(evt: NostrEvent): [SubspaceOpEvent | null, Error |
           return [null, new Error(`failed to parse auth tag: ${err}`)]
         }
         break
+      case 'parent':
+        parentHash = tag.slice(1)
     }
   }
 
@@ -138,13 +133,13 @@ function parseGovernanceEvent(evt: NostrEvent): [SubspaceOpEvent | null, Error |
   // Parse based on operation type
   switch (operation) {
     case 'post':
-      return parsePostEvent(evt, subspaceID, operation, authTag)
+      return parsePostEvent(evt, subspaceID, operation, authTag, parentHash)
     case 'propose':
-      return parseProposeEvent(evt, subspaceID, operation, authTag)
+      return parseProposeEvent(evt, subspaceID, operation, authTag, parentHash)
     case 'vote':
-      return parseVoteEvent(evt, subspaceID, operation, authTag)
+      return parseVoteEvent(evt, subspaceID, operation, authTag, parentHash)
     case 'invite':
-      return parseInviteEvent(evt, subspaceID, operation, authTag)
+      return parseInviteEvent(evt, subspaceID, operation, authTag, parentHash)
     default:
       return [null, new Error(`unknown operation type: ${operation}`)]
   }
@@ -155,12 +150,14 @@ function parsePostEvent(
   subspaceID: string,
   operation: string,
   authTag: AuthTag | undefined,
+  parents: string[]
 ): [SubspaceOpEvent, Error | null] {
   const baseEvent = NewSubspaceOpEvent(subspaceID, KindGovernancePost, evt.content)
   const post = new PostEvent(baseEvent)
   if (authTag) {
     baseEvent.authTag = authTag
   }
+  setParents(baseEvent, parents)
 
   for (const tag of evt.tags) {
     if (tag.length < 2) {
@@ -169,9 +166,6 @@ function parsePostEvent(
     switch (tag[0]) {
       case 'content_type':
         post.setContentType(tag[1])
-        break
-      case 'parent':
-        post.setParent(tag[1])
         break
     }
   }
@@ -184,12 +178,14 @@ function parseProposeEvent(
   subspaceID: string,
   operation: string,
   authTag: AuthTag | undefined,
+  parents: string[]
 ): [SubspaceOpEvent, Error | null] {
   const baseEvent = NewSubspaceOpEvent(subspaceID, KindGovernancePropose, evt.content)
   const propose = new ProposeEvent(baseEvent)
   if (authTag) {
     baseEvent.authTag = authTag
   }
+  setParents(baseEvent, parents)
 
   for (const tag of evt.tags) {
     if (tag.length < 2) {
@@ -213,12 +209,14 @@ function parseVoteEvent(
   subspaceID: string,
   operation: string,
   authTag: AuthTag | undefined,
+  parents: string[]
 ): [SubspaceOpEvent, Error | null] {
   const baseEvent = NewSubspaceOpEvent(subspaceID, KindGovernanceVote, evt.content)
   const vote = new VoteEvent(baseEvent)
   if (authTag) {
     baseEvent.authTag = authTag
   }
+  setParents(baseEvent, parents)
 
   for (const tag of evt.tags) {
     if (tag.length < 2) {
@@ -242,23 +240,25 @@ function parseInviteEvent(
   subspaceID: string,
   operation: string,
   authTag: AuthTag | undefined,
+  parents: string[]
 ): [SubspaceOpEvent, Error | null] {
   const baseEvent = NewSubspaceOpEvent(subspaceID, KindGovernanceInvite, evt.content)
   const invite = new InviteEvent(baseEvent)
   if (authTag) {
     baseEvent.authTag = authTag
   }
+  setParents(baseEvent, parents)
 
   for (const tag of evt.tags) {
     if (tag.length < 2) {
       continue
     }
     switch (tag[0]) {
-      case 'invitee_pubkey':
+      case 'inviter_addr':
         invite.setInvite(tag[1], invite.Rules)
         break
       case 'rules':
-        invite.setInvite(invite.InviteePubkey, tag[1])
+        invite.setInvite(invite.InviterAddr, tag[1])
         break
     }
   }
