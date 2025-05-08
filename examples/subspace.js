@@ -8,14 +8,16 @@ import {
   toNostrEvent,
   setParents
 } from '../lib/esm/cip/subspace.js';
-import {KindSubspaceCreate} from '../lib/esm/cip/constants.js'
-import {newPostEvent, newVoteEvent, toNostrEvent as toNostrEventGov} from '../lib/esm/cip/cip01/governance.js'
+import { KindSubspaceCreate } from '../lib/esm/cip/constants.js'
+import { newPostEvent, newVoteEvent, newMintEvent, toNostrEvent as toNostrEventGov, newProposeEvent } from '../lib/esm/cip/cip01/governance.js'
 import WebSocket from 'ws';
 
 useWebSocketImplementation(WebSocket);
 
 // 0. Connect to the relay for test
-const relayURL = 'ws://161.97.129.166:10547'
+// const relayURL = 'ws://127.0.0.1:10547'
+// const relayURL = 'ws://161.97.129.166:10547'
+const relayURL = 'wss://events.teeml.ai'
 
 const relay = await Relay.connect(relayURL);
 console.log(`connected to ${relay.url}`);
@@ -27,15 +29,15 @@ let pk = getPublicKey(sk);
 // Subscribe to events
 // This will listen for subspace creation events from the specified public key
 relay.subscribe([
-    {
-      kinds: [KindSubspaceCreate],
-      limit: 1,
-    },
-  ], {
-    onevent(event) {
-        console.log('====================================');
-        console.log('Subscribe got event:', event);
-    }
+  {
+    kinds: [KindSubspaceCreate],
+    limit: 1,
+  },
+], {
+  onevent(event) {
+    console.log('====================================');
+    console.log('Subscribe got event:', event);
+  }
 })
 
 // 1. Create a new subspace
@@ -79,6 +81,20 @@ await relay.publish(signedOpPostEvent);
 console.log('====================================');
 console.log('Subspace operation [post] event published:', signedOpPostEvent);
 
+// 3. Perform an operation in the subspace(proposer)
+const proposerEvent = await newProposeEvent(subspaceEvent.subspaceID, "proposer")
+if (!proposerEvent) {
+  throw new Error('Failed to create proposer event')
+}
+proposerEvent.setProposal('proposer-1')
+setParents(proposerEvent.SubspaceOpEvent, ['213425955dc44ecd0d12a4af527ab66b71b1b77603a144c2581f8d32826d81ec'])
+
+// Sign and publish the subspace operation event
+const signedOpProposalEvent = finalizeEvent(toNostrEventGov(proposerEvent), sk);
+await relay.publish(signedOpProposalEvent);
+console.log('====================================');
+console.log('Subspace operation [proposal] event published:', signedOpProposalEvent);
+
 // 4. Perform an operation in the subspace(Vote)
 const voteEvent = await newVoteEvent(subspaceEvent.subspaceID, "vote")
 if (!voteEvent) {
@@ -91,5 +107,19 @@ const signedOpVoteEvent = finalizeEvent(toNostrEventGov(voteEvent), sk);
 await relay.publish(signedOpVoteEvent);
 console.log('====================================');
 console.log('Subspace operation [vote] event published:', signedOpVoteEvent);
+
+// 5. Perform an operation in the subspace(Mint)
+const mintEvent = await newMintEvent(subspaceEvent.subspaceID, "mint token")
+if (!mintEvent) {
+  throw new Error('Failed to create mint event')
+}
+mintEvent.setTokenInfo('Community Token', 'CTK', '18')
+mintEvent.setMintDetails('1000', '30300:2,30301:2,30302:1,30303:3,30304:10')
+
+// Sign and publish the subspace mint event
+const signedOpMintEvent = finalizeEvent(toNostrEventGov(mintEvent), sk);
+await relay.publish(signedOpMintEvent);
+console.log('====================================');
+console.log('Subspace operation [mint] event published:', signedOpMintEvent);
 
 relay.close();

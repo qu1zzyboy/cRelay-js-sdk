@@ -11,6 +11,7 @@ export const KeyOpMap: { [key: number]: string } = {
   [constants.KindGovernancePropose]: constants.OpPropose,
   [constants.KindGovernanceVote]: constants.OpVote,
   [constants.KindGovernanceInvite]: constants.OpInvite,
+  [constants.KindGovernanceMint]: constants.OpMint,
 
   // ModelGraph operations
   [constants.KindModelgraphModel]: constants.OpModel,

@@ -1,7 +1,13 @@
 import { SubspaceOpEvent, NostrEvent, Tags, NewSubspaceOpEvent, setParents } from '../subspace.ts'
 import { getOpFromKind } from '../keys.ts'
 import { AuthTag } from '../auth.ts'
-import { KindGovernancePost, KindGovernancePropose, KindGovernanceVote, KindGovernanceInvite } from '../constants.ts'
+import {
+  KindGovernancePost,
+  KindGovernancePropose,
+  KindGovernanceVote,
+  KindGovernanceInvite,
+  KindGovernanceMint,
+} from '../constants.ts'
 
 // PostEvent represents a post operation in governance subspace
 class PostEvent {
@@ -86,8 +92,45 @@ class InviteEvent {
   }
 }
 
+// MintEvent represents a mint operation in governance subspace
+class MintEvent {
+  SubspaceOpEvent: SubspaceOpEvent
+  TokenName: string
+  TokenSymbol: string
+  TokenDecimals: string
+  InitialSupply: string
+  DropRatio: string
+
+  constructor(subspaceOpEvent: SubspaceOpEvent) {
+    this.SubspaceOpEvent = subspaceOpEvent
+    this.TokenName = ''
+    this.TokenSymbol = ''
+    this.TokenDecimals = ''
+    this.InitialSupply = ''
+    this.DropRatio = ''
+  }
+
+  // SetTokenInfo sets the token information
+  setTokenInfo(tokenName: string, tokenSymbol: string, tokenDecimals: string) {
+    this.TokenName = tokenName
+    this.TokenSymbol = tokenSymbol
+    this.TokenDecimals = tokenDecimals
+    this.SubspaceOpEvent.tags.push(['token_name', tokenName])
+    this.SubspaceOpEvent.tags.push(['token_symbol', tokenSymbol])
+    this.SubspaceOpEvent.tags.push(['token_decimals', tokenDecimals])
+  }
+
+  // SetMintDetails sets the initial supply and drop ratio
+  setMintDetails(initialSupply: string, dropRatio: string) {
+    this.InitialSupply = initialSupply
+    this.DropRatio = dropRatio
+    this.SubspaceOpEvent.tags.push(['initial_supply', initialSupply])
+    this.SubspaceOpEvent.tags.push(['drop_ratio', dropRatio])
+  }
+}
+
 // Function to convert Subspace events to Nostr Event
-export function toNostrEvent(event: PostEvent | ProposeEvent | VoteEvent | InviteEvent): NostrEvent {
+export function toNostrEvent(event: PostEvent | ProposeEvent | VoteEvent | InviteEvent | MintEvent): NostrEvent {
   const tags: Tags = event.SubspaceOpEvent.tags
 
   return {
@@ -140,6 +183,8 @@ function parseGovernanceEvent(evt: NostrEvent): [SubspaceOpEvent | null, Error |
       return parseVoteEvent(evt, subspaceID, operation, authTag, parentHash)
     case 'invite':
       return parseInviteEvent(evt, subspaceID, operation, authTag, parentHash)
+    case 'mint':
+      return parseMintEvent(evt, subspaceID, operation, authTag, parentHash)
     default:
       return [null, new Error(`unknown operation type: ${operation}`)]
   }
@@ -150,7 +195,7 @@ function parsePostEvent(
   subspaceID: string,
   operation: string,
   authTag: AuthTag | undefined,
-  parents: string[]
+  parents: string[],
 ): [SubspaceOpEvent, Error | null] {
   const baseEvent = NewSubspaceOpEvent(subspaceID, KindGovernancePost, evt.content)
   const post = new PostEvent(baseEvent)
@@ -178,7 +223,7 @@ function parseProposeEvent(
   subspaceID: string,
   operation: string,
   authTag: AuthTag | undefined,
-  parents: string[]
+  parents: string[],
 ): [SubspaceOpEvent, Error | null] {
   const baseEvent = NewSubspaceOpEvent(subspaceID, KindGovernancePropose, evt.content)
   const propose = new ProposeEvent(baseEvent)
@@ -209,7 +254,7 @@ function parseVoteEvent(
   subspaceID: string,
   operation: string,
   authTag: AuthTag | undefined,
-  parents: string[]
+  parents: string[],
 ): [SubspaceOpEvent, Error | null] {
   const baseEvent = NewSubspaceOpEvent(subspaceID, KindGovernanceVote, evt.content)
   const vote = new VoteEvent(baseEvent)
@@ -240,7 +285,7 @@ function parseInviteEvent(
   subspaceID: string,
   operation: string,
   authTag: AuthTag | undefined,
-  parents: string[]
+  parents: string[],
 ): [SubspaceOpEvent, Error | null] {
   const baseEvent = NewSubspaceOpEvent(subspaceID, KindGovernanceInvite, evt.content)
   const invite = new InviteEvent(baseEvent)
@@ -266,6 +311,55 @@ function parseInviteEvent(
   return [invite.SubspaceOpEvent, null]
 }
 
+function parseMintEvent(
+  evt: NostrEvent,
+  subspaceID: string,
+  operation: string,
+  authTag: AuthTag | undefined,
+  parents: string[],
+): [SubspaceOpEvent, Error | null] {
+  const baseEvent = NewSubspaceOpEvent(subspaceID, KindGovernanceMint, evt.content)
+  const mint = new MintEvent(baseEvent)
+  if (authTag) {
+    baseEvent.authTag = authTag
+  }
+  setParents(baseEvent, parents)
+
+  for (const tag of evt.tags) {
+    if (tag.length < 2) {
+      continue
+    }
+    switch (tag[0]) {
+      case 'token_name':
+        mint.TokenName = tag[1]
+        break
+      case 'token_symbol':
+        mint.TokenSymbol = tag[1]
+        break
+      case 'token_decimals':
+        mint.TokenDecimals = tag[1]
+        break
+      case 'initial_supply':
+        mint.InitialSupply = tag[1]
+        break
+      case 'drop_ratio':
+        mint.DropRatio = tag[1]
+        break
+    }
+  }
+
+  // Set the token info and mint details after parsing
+  if (mint.TokenName && mint.TokenSymbol && mint.TokenDecimals) {
+    mint.setTokenInfo(mint.TokenName, mint.TokenSymbol, mint.TokenDecimals)
+  }
+
+  if (mint.InitialSupply && mint.DropRatio) {
+    mint.setMintDetails(mint.InitialSupply, mint.DropRatio)
+  }
+
+  return [mint.SubspaceOpEvent, null]
+}
+
 // NewPostEvent creates a new post event
 export async function newPostEvent(subspaceID: string, content: string): Promise<PostEvent | null> {
   const baseEvent = await NewSubspaceOpEvent(subspaceID, KindGovernancePost, content)
@@ -288,4 +382,10 @@ export async function newVoteEvent(subspaceID: string, content: string): Promise
 export async function newInviteEvent(subspaceID: string, content: string): Promise<InviteEvent | null> {
   const baseEvent = await NewSubspaceOpEvent(subspaceID, KindGovernanceInvite, content)
   return new InviteEvent(baseEvent)
+}
+
+// NewMintEvent creates a new mint event
+export async function newMintEvent(subspaceID: string, content: string): Promise<MintEvent | null> {
+  const baseEvent = await NewSubspaceOpEvent(subspaceID, KindGovernanceMint, content)
+  return new MintEvent(baseEvent)
 }

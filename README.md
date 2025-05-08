@@ -32,10 +32,10 @@ brew install just
 just build
 
 # or install by npm
-npm install --save nostr-tools
+npm i @ai-chen2050/crelay-js-sdk
 
 # jsr
-npx jsr add @nostr/tools
+npx jsr add @ai-chen2050/crelay-js-sdk
 ```
 
 If using TypeScript, this package requires TypeScript >= 5.0.
