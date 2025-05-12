@@ -81,7 +81,7 @@ class InviteEvent {
     this.Rules = ''
   }
 
-  // SetInvite sets the inviter pubkey and rules
+  // SetInvite sets the inviter address and rules
   setInvite(inviterAddress: string, rules: string) {
     this.InviterAddr = inviterAddress
     this.SubspaceOpEvent.tags.push(['inviter_addr', inviterAddress])

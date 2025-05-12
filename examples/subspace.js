@@ -8,7 +8,7 @@ import {
   toNostrEvent,
   setParents
 } from '../lib/esm/cip/subspace.js';
-import { KindSubspaceCreate } from '../lib/esm/cip/constants.js'
+import { KindSubspaceCreate, DefaultSubspaceOps } from '../lib/esm/cip/constants.js'
 import { newPostEvent, newVoteEvent, newMintEvent, toNostrEvent as toNostrEventGov, newProposeEvent } from '../lib/esm/cip/cip01/governance.js'
 import WebSocket from 'ws';
 
@@ -42,12 +42,11 @@ relay.subscribe([
 
 // 1. Create a new subspace
 const subspaceName = 'TestSubspace';
-const ops = 'post=1,propose=2,vote=3,invite=4';
 const rules = 'rule1';
 const description = 'This is a test subspace';
 const imageURL = 'http://example.com/image.png';
 
-const subspaceEvent = NewSubspaceCreateEvent(subspaceName, ops, rules, description, imageURL);
+const subspaceEvent = NewSubspaceCreateEvent(subspaceName, DefaultSubspaceOps, rules, description, imageURL);
 ValidateSubspaceCreateEvent(subspaceEvent);
 
 // Sign and publish the subspace creation event

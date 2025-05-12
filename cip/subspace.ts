@@ -174,7 +174,7 @@ export function NewSubspaceOpEvent(subspaceID: string, kind: number, content: st
   const tags: Tag[] = [
     ['d', 'subspace_op'],
     ['sid', subspaceID],
-    ['ops', operation[0]],
+    ['op', operation[0]],
   ]
 
   return {
