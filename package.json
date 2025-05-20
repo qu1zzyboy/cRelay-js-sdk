@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@ai-chen2050/crelay-js-sdk",
-  "version": "2.12.5",
+  "version": "2.12.6",
   "description": "Tools for making a causality-key of cRelay client.",
   "repository": {
     "type": "git",

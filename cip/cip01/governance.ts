@@ -7,6 +7,7 @@ import {
   KindGovernanceVote,
   KindGovernanceInvite,
   KindGovernanceMint,
+  OpPost, OpPropose, OpVote, OpMint, OpInvite
 } from '../constants.ts'
 
 // PostEvent represents a post operation in governance subspace
@@ -175,15 +176,15 @@ function parseGovernanceEvent(evt: NostrEvent): [SubspaceOpEvent | null, Error |
 
   // Parse based on operation type
   switch (operation) {
-    case 'post':
+    case OpPost:
       return parsePostEvent(evt, subspaceID, operation, authTag, parentHash)
-    case 'propose':
+    case OpPropose:
       return parseProposeEvent(evt, subspaceID, operation, authTag, parentHash)
-    case 'vote':
+    case OpVote:
       return parseVoteEvent(evt, subspaceID, operation, authTag, parentHash)
-    case 'invite':
+    case OpInvite:
       return parseInviteEvent(evt, subspaceID, operation, authTag, parentHash)
-    case 'mint':
+    case OpMint:
       return parseMintEvent(evt, subspaceID, operation, authTag, parentHash)
     default:
       return [null, new Error(`unknown operation type: ${operation}`)]

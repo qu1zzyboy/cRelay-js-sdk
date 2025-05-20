@@ -15,7 +15,7 @@ export const KeyOpMap: { [key: number]: string } = {
 
   // ModelGraph operations
   [constants.KindModelgraphModel]: constants.OpModel,
-  [constants.KindModelgraphData]: constants.OpData,
+  [constants.KindModelgraphDataset]: constants.OpDataset,
   [constants.KindModelgraphCompute]: constants.OpCompute,
   [constants.KindModelgraphAlgo]: constants.OpAlgo,
   [constants.KindModelgraphValid]: constants.OpValid,

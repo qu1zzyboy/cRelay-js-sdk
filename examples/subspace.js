@@ -16,8 +16,8 @@ useWebSocketImplementation(WebSocket);
 
 // 0. Connect to the relay for test
 // const relayURL = 'ws://127.0.0.1:10547'
-// const relayURL = 'ws://161.97.129.166:10547'
-const relayURL = 'wss://events.teeml.ai'
+const relayURL = 'ws://161.97.129.166:10547'
+// const relayURL = 'wss://events.teeml.ai'
 
 const relay = await Relay.connect(relayURL);
 console.log(`connected to ${relay.url}`);
