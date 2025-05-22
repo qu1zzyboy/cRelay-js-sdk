@@ -57,6 +57,7 @@ class TaskEvent {
   Assignee: string
   Status: string
   Deadline: string
+  Priority: string
 
   constructor(subspaceOpEvent: SubspaceOpEvent) {
     this.SubspaceOpEvent = subspaceOpEvent
@@ -66,16 +67,26 @@ class TaskEvent {
     this.Assignee = ''
     this.Status = ''
     this.Deadline = ''
+    this.Priority = ''
   }
 
   // SetTaskInfo sets the task information
-  setTaskInfo(projectID: string, taskID: string, title: string, assignee: string, status: string, deadline: string) {
+  setTaskInfo(
+    projectID: string,
+    taskID: string,
+    title: string,
+    assignee: string,
+    status: string,
+    deadline: string,
+    priority: string,
+  ) {
     this.ProjectID = projectID
     this.TaskID = taskID
     this.Title = title
     this.Assignee = assignee
     this.Status = status
     this.Deadline = deadline
+    this.Priority = priority
 
     this.SubspaceOpEvent.tags.push(
       ['project_id', projectID],
@@ -84,6 +95,7 @@ class TaskEvent {
       ['assignee', assignee],
       ['status', status],
       ['deadline', deadline],
+      ['priority', priority],
     )
   }
 }
@@ -116,6 +128,8 @@ class RelationEvent {
   To: string
   RelationType: string
   Context: string
+  Weight: number
+  Description: string
 
   constructor(subspaceOpEvent: SubspaceOpEvent) {
     this.SubspaceOpEvent = subspaceOpEvent
@@ -123,19 +137,39 @@ class RelationEvent {
     this.To = ''
     this.RelationType = ''
     this.Context = ''
+    this.Weight = 0
+    this.Description = ''
   }
 
   // SetRelationInfo sets the relation information
-  setRelationInfo(from: string, to: string, relationType: string, context: string) {
+  setRelationInfo(
+    from: string,
+    to: string,
+    relationType: string,
+    context: string,
+    weight: number,
+    description: string,
+  ) {
     this.From = from
     this.To = to
     this.RelationType = relationType
     this.Context = context
+    this.Weight = weight
+    this.Description = description
 
-    this.SubspaceOpEvent.tags.push(['from', from], ['to', to], ['relation_type', relationType])
+    this.SubspaceOpEvent.tags.push(
+      ['from', from],
+      ['to', to],
+      ['relation_type', relationType],
+      ['weight', weight.toString()],
+    )
 
     if (context) {
       this.SubspaceOpEvent.tags.push(['context', context])
+    }
+
+    if (description) {
+      this.SubspaceOpEvent.tags.push(['description', description])
     }
   }
 }
@@ -291,6 +325,7 @@ function parseTaskEvent(
   let assignee = ''
   let status = ''
   let deadline = ''
+  let priority = ''
 
   for (const tag of evt.tags) {
     if (tag.length < 2) {
@@ -315,10 +350,13 @@ function parseTaskEvent(
       case 'deadline':
         deadline = tag[1]
         break
+      case 'priority':
+        priority = tag[1]
+        break
     }
   }
 
-  task.setTaskInfo(projectID, taskID, title, assignee, status, deadline)
+  task.setTaskInfo(projectID, taskID, title, assignee, status, deadline, priority)
   return [task.SubspaceOpEvent, null]
 }
 
@@ -375,6 +413,8 @@ function parseRelationEvent(
   let to = ''
   let relationType = ''
   let context = ''
+  let weight = 0
+  let description = ''
 
   for (const tag of evt.tags) {
     if (tag.length < 2) {
@@ -393,10 +433,16 @@ function parseRelationEvent(
       case 'context':
         context = tag[1]
         break
+      case 'weight':
+        weight = parseInt(tag[1])
+        break
+      case 'description':
+        description = tag[1]
+        break
     }
   }
 
-  relation.setRelationInfo(from, to, relationType, context)
+  relation.setRelationInfo(from, to, relationType, context, weight, description)
   return [relation.SubspaceOpEvent, null]
 }
 

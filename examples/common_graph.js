@@ -98,7 +98,8 @@ taskEvent.setTaskInfo(
     'Implement feature X',
     'user1',
     'in-progress',
-    '2024-12-31'
+    '2024-12-31',
+    'high'
 )
 
 // Sign and publish the task event
@@ -125,7 +126,14 @@ const relationEvent = await newRelationEvent(subspaceEvent.subspaceID, "Create a
 if (!relationEvent) {
     throw new Error('Failed to create relation event')
 }
-relationEvent.setRelationInfo('user1', 'user2', 'follows', 'social')
+relationEvent.setRelationInfo(
+    'user1',
+    'user2',
+    'follows',
+    'social',
+    0.85,
+    'Strong professional relationship with regular interactions'
+)
 
 // Sign and publish the relation event
 const signedRelationEvent = finalizeEvent(toNostrEventCommon(relationEvent), sk);

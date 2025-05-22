@@ -2,9 +2,16 @@ import * as constants from './constants.ts' // Fixed import statement
 
 // KeyOpMap maps kind values to operation names
 export const KeyOpMap: { [key: number]: string } = {
-  // common operations
+  // Subspace common operations
   [constants.KindSubspaceCreate]: constants.OpSubspaceCreate,
   [constants.KindSubspaceJoin]: constants.OpSubspaceJoin,
+
+  // CommonGraph operations
+  [constants.KindCommonGraphProject]: constants.OpProject,
+  [constants.KindCommonGraphTask]: constants.OpTask,
+  [constants.KindCommonGraphEntity]: constants.OpEntity,
+  [constants.KindCommonGraphRelation]: constants.OpRelation,
+  [constants.KindCommonGraphObservation]: constants.OpObservation,
 
   // Governance operations
   [constants.KindGovernancePost]: constants.OpPost,
@@ -19,6 +26,16 @@ export const KeyOpMap: { [key: number]: string } = {
   [constants.KindModelgraphCompute]: constants.OpCompute,
   [constants.KindModelgraphAlgo]: constants.OpAlgo,
   [constants.KindModelgraphValid]: constants.OpValid,
+  [constants.KindModelgraphFinetune]: constants.OpFinetune,
+  [constants.KindModelgraphConversation]: constants.OpConversation,
+  [constants.KindModelgraphSession]: constants.OpSession,
+
+  // OpenResearch operations
+  [constants.KindOpenresearchPaper]: constants.OpPaper,
+  [constants.KindOpenresearchAnnotation]: constants.OpAnnotation,
+  [constants.KindOpenresearchReview]: constants.OpReview,
+  [constants.KindOpenresearchAiAnalysis]: constants.OpAiAnalysis,
+  [constants.KindOpenresearchDiscussion]: constants.OpDiscussion,
 }
 
 // GetOpFromKind returns the operation name for a given kind value
