@@ -1,3 +1,4 @@
+// * Event kinds
 // Subspace common event kinds
 export const KindSubspaceCreate = 30100
 export const KindSubspaceJoin = 30200
@@ -33,6 +34,7 @@ export const KindOpenresearchReview = 30503
 export const KindOpenresearchAiAnalysis = 30504
 export const KindOpenresearchDiscussion = 30505
 
+// * Event operations
 // General base operation types
 export const OpSubspaceCreate = 'subspace_create' // 30100
 export const OpSubspaceJoin = 'subspace_join' // 30200
@@ -68,18 +70,19 @@ export const OpReview = 'review' // 30503
 export const OpAiAnalysis = 'ai_analysis' // 30504
 export const OpDiscussion = 'discussion' // 30505
 
+// * CIP operation lists
 // Default common project actions
 export const DefaultCommonPrjOps = 'project=30101,task=30102'
 
 // Default common graph actions
 export const DefaultCommonGraphOps = 'entity=30103,relation=30104,observation=30105'
 
-// Default operations string for subspace creation
+// Default operations string
 export const DefaultSubspaceOps = 'post=30300,propose=30301,vote=30302,invite=30303,mint=30304' // Ensure consistent formatting
 
-// Modelgraph operations string for subspace creation
+// Modelgraph operations string
 export const ModelGraphSubspaceOps =
   'model=30404,dataset=30405,compute=30406,algo=30407,valid=30408,finetune=30409,conversation=30410,session=30411' // Ensure consistent formatting
 
-// OpenResearch operations string for subspace creation
+// OpenResearch operations string
 export const OpenResearchSubspaceOps = 'paper=30501,annotation=30502,review=30503,ai_analysis=30504,discussion=30505' // Ensure consistent formatting

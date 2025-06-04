@@ -1,0 +1,81 @@
+# JS-SDK CIP Generator command
+
+## Define event by JSON file
+
+```json
+// path: chat.json
+{
+    "name": "chat",
+    "package": "cip100",
+    "description": "Chat application CIP implementation",
+    "events": [
+        {
+            "name": "MessageEvent",
+            "operation": "message",
+            "kind": 30601,
+            "description": "Represents a chat message",
+            "fields": [
+                {
+                    "name": "Content",
+                    "type": "string",
+                    "tag": "content",
+                    "required": true
+                },
+                {
+                    "name": "RoomID",
+                    "type": "string",
+                    "tag": "room_id",
+                    "required": true
+                },
+                {
+                    "name": "ReplyTo",
+                    "type": "string",
+                    "tag": "reply_to",
+                    "required": false
+                },
+                {
+                    "name": "Mentions",
+                    "type": "string",
+                    "tag": "mentions",
+                    "required": false,
+                    "multiple": true
+                }
+            ]
+        },
+        {
+            "name": "RoomEvent",
+            "operation": "room",
+            "kind": 30602,
+            "description": "Represents a chat room",
+            "fields": [
+                {
+                    "name": "Name",
+                    "type": "string",
+                    "tag": "name",
+                    "required": true
+                },
+                {
+                    "name": "Description",
+                    "type": "string",
+                    "tag": "description",
+                    "required": false
+                },
+                {
+                    "name": "Members",
+                    "type": "string",
+                    "tag": "members",
+                    "required": false,
+                    "multiple": true
+                }
+            ]
+        }
+    ]
+}
+```
+
+## Execute cmd
+
+```shell
+npm install -g tsx
+tsx cip/generator/generate-cip.ts cip/generator/chat.json
+```
