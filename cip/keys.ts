@@ -36,6 +36,26 @@ export const KeyOpMap: { [key: number]: string } = {
   [constants.KindOpenresearchReview]: constants.OpReview,
   [constants.KindOpenresearchAiAnalysis]: constants.OpAiAnalysis,
   [constants.KindOpenresearchDiscussion]: constants.OpDiscussion,
+  [constants.KindOpenresearchReadPaper]: constants.OpReadPaper,
+  [constants.KindOpenresearchCoCreatePaper]: constants.OpCoCreatePaper,
+
+  // Social Actions operations
+  [constants.KindSocialLike]: constants.OpLike,
+  [constants.KindSocialCollect]: constants.OpCollect,
+  [constants.KindSocialShare]: constants.OpShare,
+  [constants.KindSocialComment]: constants.OpComment,
+  [constants.KindSocialTag]: constants.OpTag,
+  [constants.KindSocialFollow]: constants.OpFollow,
+  [constants.KindSocialUnfollow]: constants.OpUnfollow,
+  [constants.KindSocialQuestion]: constants.OpQuestion,
+  [constants.KindSocialRoom]: constants.OpRoom,
+  [constants.KindSocialMessageInRoom]: constants.OpMessageInRoom,
+
+  // Community Actions operations
+  [constants.KindCommunityCreate]: constants.OpCommunityCreate,
+  [constants.KindCommunityInvite]: constants.OpCommunityInvite,
+  [constants.KindCommunityChannelCreate]: constants.OpChannelCreate,
+  [constants.KindCommunityChannelMessage]: constants.OpChannelMessage,
 }
 
 // GetOpFromKind returns the operation name for a given kind value

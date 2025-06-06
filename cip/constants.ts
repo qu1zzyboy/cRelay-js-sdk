@@ -33,6 +33,26 @@ export const KindOpenresearchAnnotation = 30502
 export const KindOpenresearchReview = 30503
 export const KindOpenresearchAiAnalysis = 30504
 export const KindOpenresearchDiscussion = 30505
+export const KindOpenresearchReadPaper = 30506
+export const KindOpenresearchCoCreatePaper = 30507
+
+// Social Actions event kinds (CIP 06)
+export const KindSocialLike = 30600
+export const KindSocialCollect = 30601
+export const KindSocialShare = 30602
+export const KindSocialComment = 30603
+export const KindSocialTag = 30604
+export const KindSocialFollow = 30605
+export const KindSocialUnfollow = 30606
+export const KindSocialQuestion = 30607
+export const KindSocialRoom = 30608
+export const KindSocialMessageInRoom = 30609
+
+// Community Actions event kinds (CIP 07)
+export const KindCommunityCreate = 30700
+export const KindCommunityInvite = 30701
+export const KindCommunityChannelCreate = 30702
+export const KindCommunityChannelMessage = 30703
 
 // * Event operations
 // General base operation types
@@ -69,6 +89,26 @@ export const OpAnnotation = 'annotation' // 30502
 export const OpReview = 'review' // 30503
 export const OpAiAnalysis = 'ai_analysis' // 30504
 export const OpDiscussion = 'discussion' // 30505
+export const OpReadPaper = 'read_paper' // 30506
+export const OpCoCreatePaper = 'co_create_paper' // 30507
+
+// Social Actions operation types
+export const OpLike = 'like' // 30600
+export const OpCollect = 'collect' // 30601
+export const OpShare = 'share' // 30602
+export const OpComment = 'comment' // 30603
+export const OpTag = 'tag' // 30604
+export const OpFollow = 'follow' // 30605
+export const OpUnfollow = 'unfollow' // 30606
+export const OpQuestion = 'question' // 30607
+export const OpRoom = 'room' // 30608
+export const OpMessageInRoom = 'message' // 30609
+
+// Community Actions operation types
+export const OpCommunityCreate = 'community_create' // 30700
+export const OpCommunityInvite = 'community_invite' // 30701
+export const OpChannelCreate = 'channel_create' // 30702
+export const OpChannelMessage = 'channel_message' // 30703
 
 // * CIP operation lists
 // Default common project actions
@@ -85,4 +125,12 @@ export const ModelGraphSubspaceOps =
   'model=30404,dataset=30405,compute=30406,algo=30407,valid=30408,finetune=30409,conversation=30410,session=30411' // Ensure consistent formatting
 
 // OpenResearch operations string
-export const OpenResearchSubspaceOps = 'paper=30501,annotation=30502,review=30503,ai_analysis=30504,discussion=30505' // Ensure consistent formatting
+export const OpenResearchSubspaceOps =
+  'paper=30501,annotation=30502,review=30503,ai_analysis=30504,discussion=30505,read_paper=30506,co_create_paper=30507' // Ensure consistent formatting
+
+// Social Actions operations string
+export const SocialSubspaceOps =
+  'like=30600,collect=30601,share=30602,comment=30603,tag=30604,follow=30605,unfollow=30606,question=30607,room=30608,message=30609'
+
+// Community Actions operations string
+export const CommunitySubspaceOps = 'community_create=30700,community_invite=30701,channel_create=30702,channel_message=30703'

@@ -7,11 +7,15 @@ import {
   KindOpenresearchReview,
   KindOpenresearchAiAnalysis,
   KindOpenresearchDiscussion,
+  KindOpenresearchReadPaper,
+  KindOpenresearchCoCreatePaper,
   OpPaper,
   OpAnnotation,
   OpReview,
   OpAiAnalysis,
   OpDiscussion,
+  OpReadPaper,
+  OpCoCreatePaper,
 } from '../constants.ts'
 
 // PaperEvent represents a paper operation in openresearch
@@ -92,7 +96,6 @@ class AnnotationEvent {
   Position: string
   Type: string
   ParentID: string
-  Content: string
 
   constructor(subspaceOpEvent: SubspaceOpEvent) {
     this.SubspaceOpEvent = subspaceOpEvent
@@ -100,7 +103,6 @@ class AnnotationEvent {
     this.Position = ''
     this.Type = ''
     this.ParentID = ''
-    this.Content = ''
   }
 
   // SetAnnotationInfo sets the annotation information
@@ -109,7 +111,6 @@ class AnnotationEvent {
     this.Position = position
     this.Type = type
     this.ParentID = parentID
-    this.Content = content
 
     this.SubspaceOpEvent.tags.push(['paper_id', paperID], ['position', position], ['type', type])
 
@@ -237,14 +238,12 @@ class DiscussionEvent {
   Topic: string
   ParentID: string
   References: string[]
-  Content: string
 
   constructor(subspaceOpEvent: SubspaceOpEvent) {
     this.SubspaceOpEvent = subspaceOpEvent
     this.Topic = ''
     this.ParentID = ''
     this.References = []
-    this.Content = ''
   }
 
   // SetDiscussionInfo sets the discussion information
@@ -252,7 +251,6 @@ class DiscussionEvent {
     this.Topic = topic
     this.ParentID = parentID
     this.References = references
-    this.Content = content
 
     this.SubspaceOpEvent.tags.push(['topic', topic])
 
@@ -265,6 +263,66 @@ class DiscussionEvent {
     }
 
     this.SubspaceOpEvent.content = content
+  }
+}
+
+// ReadPaperEvent represents a paper reading operation in openresearch
+class ReadPaperEvent {
+  SubspaceOpEvent: SubspaceOpEvent
+  PaperID: string
+  UserID: string
+  Duration: number
+  Depth: string
+
+  constructor(subspaceOpEvent: SubspaceOpEvent) {
+    this.SubspaceOpEvent = subspaceOpEvent
+    this.PaperID = ''
+    this.UserID = ''
+    this.Duration = 0
+    this.Depth = ''
+  }
+
+  // SetReadPaperInfo sets the read paper information
+  setReadPaperInfo(paperID: string, userID: string, duration: number, depth: string) {
+    this.PaperID = paperID
+    this.UserID = userID
+    this.Duration = duration
+    this.Depth = depth
+
+    this.SubspaceOpEvent.tags.push(
+      ['paper_id', paperID],
+      ['user_id', userID],
+      ['duration', duration.toString()],
+      ['depth', depth],
+    )
+  }
+}
+
+// CoCreatePaperEvent represents a collaborative paper creation operation in openresearch
+class CoCreatePaperEvent {
+  SubspaceOpEvent: SubspaceOpEvent
+  PaperID: string
+  UserIDs: string[]
+  Quality: string
+
+  constructor(subspaceOpEvent: SubspaceOpEvent) {
+    this.SubspaceOpEvent = subspaceOpEvent
+    this.PaperID = ''
+    this.UserIDs = []
+    this.Quality = ''
+  }
+
+  // SetCoCreatePaperInfo sets the collaborative paper creation information
+  setCoCreatePaperInfo(paperID: string, userIDs: string[], quality: string) {
+    this.PaperID = paperID
+    this.UserIDs = userIDs
+    this.Quality = quality
+
+    this.SubspaceOpEvent.tags.push(['paper_id', paperID], ['quality', quality])
+
+    if (userIDs.length > 0) {
+      this.SubspaceOpEvent.tags.push(['user_ids', ...userIDs])
+    }
   }
 }
 
@@ -326,6 +384,10 @@ function parseOpenResearchEvent(evt: NostrEvent): [SubspaceOpEvent | null, Error
       return parseAiAnalysisEvent(evt, subspaceID, operation as string, authTag, parentHash)
     case OpDiscussion:
       return parseDiscussionEvent(evt, subspaceID, operation as string, authTag, parentHash)
+    case OpReadPaper:
+      return parseReadPaperEvent(evt, subspaceID, operation as string, authTag, parentHash)
+    case OpCoCreatePaper:
+      return parseCoCreatePaperEvent(evt, subspaceID, operation as string, authTag, parentHash)
     default:
       return [null, new Error(`unknown operation type: ${operation}`)]
   }
@@ -589,6 +651,88 @@ function parseDiscussionEvent(
   return [discussion.SubspaceOpEvent, null]
 }
 
+function parseReadPaperEvent(
+  evt: NostrEvent,
+  subspaceID: string,
+  operation: string,
+  authTag: AuthTag | undefined,
+  parents: string[],
+): [SubspaceOpEvent, Error | null] {
+  const baseEvent = NewSubspaceOpEvent(subspaceID, KindOpenresearchReadPaper, evt.content)
+  const readPaper = new ReadPaperEvent(baseEvent)
+  if (authTag) {
+    baseEvent.authTag = authTag
+  }
+  setParents(baseEvent, parents)
+
+  let paperID = ''
+  let userID = ''
+  let duration = 0
+  let depth = ''
+
+  for (const tag of evt.tags) {
+    if (tag.length < 2) {
+      continue
+    }
+    switch (tag[0]) {
+      case 'paper_id':
+        paperID = tag[1]
+        break
+      case 'user_id':
+        userID = tag[1]
+        break
+      case 'duration':
+        duration = parseInt(tag[1])
+        break
+      case 'depth':
+        depth = tag[1]
+        break
+    }
+  }
+
+  readPaper.setReadPaperInfo(paperID, userID, duration, depth)
+  return [readPaper.SubspaceOpEvent, null]
+}
+
+function parseCoCreatePaperEvent(
+  evt: NostrEvent,
+  subspaceID: string,
+  operation: string,
+  authTag: AuthTag | undefined,
+  parents: string[],
+): [SubspaceOpEvent, Error | null] {
+  const baseEvent = NewSubspaceOpEvent(subspaceID, KindOpenresearchCoCreatePaper, evt.content)
+  const coCreatePaper = new CoCreatePaperEvent(baseEvent)
+  if (authTag) {
+    baseEvent.authTag = authTag
+  }
+  setParents(baseEvent, parents)
+
+  let paperID = ''
+  let userIDs: string[] = []
+  let quality = ''
+
+  for (const tag of evt.tags) {
+    if (tag.length < 2) {
+      continue
+    }
+    switch (tag[0]) {
+      case 'paper_id':
+        paperID = tag[1]
+        break
+      case 'user_ids':
+        userIDs = tag.slice(1)
+        break
+      case 'quality':
+        quality = tag[1]
+        break
+    }
+  }
+
+  coCreatePaper.setCoCreatePaperInfo(paperID, userIDs, quality)
+  return [coCreatePaper.SubspaceOpEvent, null]
+}
+
 // NewPaperEvent creates a new paper event
 export async function newPaperEvent(subspaceID: string, content: string): Promise<PaperEvent | null> {
   const baseEvent = await NewSubspaceOpEvent(subspaceID, KindOpenresearchPaper, content)
@@ -617,4 +761,16 @@ export async function newAiAnalysisEvent(subspaceID: string, content: string): P
 export async function newDiscussionEvent(subspaceID: string, content: string): Promise<DiscussionEvent | null> {
   const baseEvent = await NewSubspaceOpEvent(subspaceID, KindOpenresearchDiscussion, content)
   return new DiscussionEvent(baseEvent)
+}
+
+// NewReadPaperEvent creates a new read paper event
+export async function newReadPaperEvent(subspaceID: string, content: string): Promise<ReadPaperEvent | null> {
+  const baseEvent = await NewSubspaceOpEvent(subspaceID, KindOpenresearchReadPaper, content)
+  return new ReadPaperEvent(baseEvent)
+}
+
+// NewCoCreatePaperEvent creates a new collaborative paper creation event
+export async function newCoCreatePaperEvent(subspaceID: string, content: string): Promise<CoCreatePaperEvent | null> {
+  const baseEvent = await NewSubspaceOpEvent(subspaceID, KindOpenresearchCoCreatePaper, content)
+  return new CoCreatePaperEvent(baseEvent)
 }
