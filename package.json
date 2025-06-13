@@ -1,11 +1,11 @@
 {
   "type": "module",
-  "name": "@ai-chen2050/crelay-js-sdk",
-  "version": "2.12.8",
+  "name": "@litterpigger/crelay-js-sdk",
+  "version": "0.0.1",
   "description": "Tools for making a causality-key of cRelay client.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/hetu-project/cRelay-js-sdk.git"
+    "url": "https://github.com/qu1zzyboy/cRelay-js-sdk.git"
   },
   "files": [
     "lib"
