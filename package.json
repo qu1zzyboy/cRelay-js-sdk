@@ -338,9 +338,7 @@
     "typescript": "^5.8.2"
   },
   "scripts": {
-    "prepublish": "just build",
-    "build": "tsc && esbuild src/index.ts --bundle --outfile=lib/esm/index.js --format=esm && esbuild src/index.ts --bundle --outfile=lib/cjs/index.js --format=cjs",
-    "build:cip": "tsc && esbuild cip/index.ts --bundle --outfile=lib/esm/cip/index.js --format=esm && esbuild cip/index.ts --bundle --outfile=lib/cjs/cip/index.js --format=cjs"
+    "prepublish": "just build"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org"
