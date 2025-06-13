@@ -36,16 +36,33 @@ export {
 
 // Export common graph module
 export {
+  newProjectEvent,
+  newTaskEvent,
+  newEntityEvent,
+  newRelationEvent,
+  newObservationEvent,
   toNostrEvent as toNostrEventCommonGraph
 } from './cip02/common_graph.js'
 
 // Export model graph module
 export {
+  newModelEvent,
+  newComputeEvent,
+  newAlgoEvent,
+  newValidEvent,
+  newDatasetEvent,
+  newFinetuneEvent,
+  newConversationEvent,
+  newSessionEvent,
   toNostrEvent as toNostrEventModelGraph
 } from './cip03/modelgraph.js'
 
 // Export community module
 export {
+  newCommunityCreateEvent,
+  newCommunityInviteEvent,
+  newChannelCreateEvent,
+  newChannelMessageEvent,
   toNostrEvent as toNostrEventCommunity
 } from './cip07/community.js'
 
