@@ -18,6 +18,8 @@ let common = {
   entryPoints,
   bundle: true,
   sourcemap: 'external',
+  platform: 'node',
+  target: 'node18',
 }
 
 esbuild

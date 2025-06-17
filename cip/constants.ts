@@ -35,6 +35,7 @@ export const KindOpenresearchAiAnalysis = 30504
 export const KindOpenresearchDiscussion = 30505
 export const KindOpenresearchReadPaper = 30506
 export const KindOpenresearchCoCreatePaper = 30507
+export const KindOpenresearchSearch = 30508
 
 // Social Actions event kinds (CIP 06)
 export const KindSocialLike = 30600
@@ -91,6 +92,7 @@ export const OpAiAnalysis = 'ai_analysis' // 30504
 export const OpDiscussion = 'discussion' // 30505
 export const OpReadPaper = 'read_paper' // 30506
 export const OpCoCreatePaper = 'co_create_paper' // 30507
+export const OpSearch = 'search' // 30508
 
 // Social Actions operation types
 export const OpLike = 'like' // 30600
@@ -126,7 +128,7 @@ export const ModelGraphSubspaceOps =
 
 // OpenResearch operations string
 export const OpenResearchSubspaceOps =
-  'paper=30501,annotation=30502,review=30503,ai_analysis=30504,discussion=30505,read_paper=30506,co_create_paper=30507' // Ensure consistent formatting
+  'paper=30501,annotation=30502,review=30503,ai_analysis=30504,discussion=30505,read_paper=30506,co_create_paper=30507,search=30508' // Ensure consistent formatting
 
 // Social Actions operations string
 export const SocialSubspaceOps =

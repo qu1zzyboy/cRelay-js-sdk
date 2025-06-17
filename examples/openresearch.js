@@ -20,6 +20,7 @@ import {
     newReviewEvent,
     newAiAnalysisEvent,
     newDiscussionEvent,
+    newSearchEvent,
     toNostrEvent as toNostrEventOpenResearch,
 } from '../lib/esm/cip/cip05/openresearch.js'
 import WebSocket from 'ws'
@@ -195,5 +196,22 @@ const signedDiscussionEvent = finalizeEvent(toNostrEventOpenResearch(discussionE
 await relay.publish(signedDiscussionEvent)
 console.log('====================================')
 console.log('Discussion event published:', signedDiscussionEvent)
+
+// 8. Create a search event
+const searchEvent = await newSearchEvent(subspaceEvent.subspaceID, '')
+if (!searchEvent) {
+    throw new Error('Failed to create search event')
+}
+searchEvent.setSearchInfo(
+    subspaceEvent.subspaceID,
+    pk,
+    'Search for papers about machine learning and AI',
+)
+
+// Sign and publish the search event
+const signedSearchEvent = finalizeEvent(toNostrEventOpenResearch(searchEvent), sk)
+await relay.publish(signedSearchEvent)
+console.log('====================================')
+console.log('Search event published:', signedSearchEvent)
 
 relay.close() 

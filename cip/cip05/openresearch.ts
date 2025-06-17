@@ -9,6 +9,7 @@ import {
   KindOpenresearchDiscussion,
   KindOpenresearchReadPaper,
   KindOpenresearchCoCreatePaper,
+  KindOpenresearchSearch,
   OpPaper,
   OpAnnotation,
   OpReview,
@@ -16,6 +17,7 @@ import {
   OpDiscussion,
   OpReadPaper,
   OpCoCreatePaper,
+  OpSearch,
 } from '../constants.ts'
 
 // PaperEvent represents a paper operation in openresearch
@@ -326,9 +328,34 @@ class CoCreatePaperEvent {
   }
 }
 
+// SearchEvent represents a search operation in openresearch
+class SearchEvent {
+  SubspaceOpEvent: SubspaceOpEvent
+  SubspaceID: string
+  UserID: string
+  Content: string
+
+  constructor(subspaceOpEvent: SubspaceOpEvent) {
+    this.SubspaceOpEvent = subspaceOpEvent
+    this.SubspaceID = ''
+    this.UserID = ''
+    this.Content = ''
+  }
+
+  // SetSearchInfo sets the search information
+  setSearchInfo(subspaceID: string, userID: string, content: string) {
+    this.SubspaceID = subspaceID
+    this.UserID = userID
+    this.Content = content
+
+    this.SubspaceOpEvent.tags.push(['subspace_id', subspaceID], ['user_id', userID])
+    this.SubspaceOpEvent.content = content
+  }
+}
+
 // Function to convert Subspace events to Nostr Event
 export function toNostrEvent(
-  event: PaperEvent | AnnotationEvent | ReviewEvent | AiAnalysisEvent | DiscussionEvent,
+  event: PaperEvent | AnnotationEvent | ReviewEvent | AiAnalysisEvent | DiscussionEvent | ReadPaperEvent | CoCreatePaperEvent | SearchEvent,
 ): NostrEvent {
   const tags: Tags = event.SubspaceOpEvent.tags
 
@@ -388,6 +415,8 @@ function parseOpenResearchEvent(evt: NostrEvent): [SubspaceOpEvent | null, Error
       return parseReadPaperEvent(evt, subspaceID, operation as string, authTag, parentHash)
     case OpCoCreatePaper:
       return parseCoCreatePaperEvent(evt, subspaceID, operation as string, authTag, parentHash)
+    case OpSearch:
+      return parseSearchEvent(evt, subspaceID, operation as string, authTag, parentHash)
     default:
       return [null, new Error(`unknown operation type: ${operation}`)]
   }
@@ -733,6 +762,44 @@ function parseCoCreatePaperEvent(
   return [coCreatePaper.SubspaceOpEvent, null]
 }
 
+function parseSearchEvent(
+  evt: NostrEvent,
+  subspaceID: string,
+  operation: string,
+  authTag: AuthTag | undefined,
+  parents: string[],
+): [SubspaceOpEvent, Error | null] {
+  const baseEvent = NewSubspaceOpEvent(subspaceID, KindOpenresearchSearch, evt.content)
+  const search = new SearchEvent(baseEvent)
+  if (authTag) {
+    baseEvent.authTag = authTag
+  }
+  setParents(baseEvent, parents)
+
+  let searchSubspaceID = ''
+  let userID = ''
+  let searchContent = ''
+
+  for (const tag of evt.tags) {
+    if (tag.length < 2) {
+      continue
+    }
+    switch (tag[0]) {
+      case 'subspace_id':
+        searchSubspaceID = tag[1]
+        break
+      case 'user_id':
+        userID = tag[1]
+        break
+    }
+  }
+
+  searchContent = evt.content
+
+  search.setSearchInfo(searchSubspaceID, userID, searchContent)
+  return [search.SubspaceOpEvent, null]
+}
+
 // NewPaperEvent creates a new paper event
 export async function newPaperEvent(subspaceID: string, content: string): Promise<PaperEvent | null> {
   const baseEvent = await NewSubspaceOpEvent(subspaceID, KindOpenresearchPaper, content)
@@ -773,4 +840,10 @@ export async function newReadPaperEvent(subspaceID: string, content: string): Pr
 export async function newCoCreatePaperEvent(subspaceID: string, content: string): Promise<CoCreatePaperEvent | null> {
   const baseEvent = await NewSubspaceOpEvent(subspaceID, KindOpenresearchCoCreatePaper, content)
   return new CoCreatePaperEvent(baseEvent)
+}
+
+// NewSearchEvent creates a new search event
+export async function newSearchEvent(subspaceID: string, content: string): Promise<SearchEvent | null> {
+  const baseEvent = await NewSubspaceOpEvent(subspaceID, KindOpenresearchSearch, content)
+  return new SearchEvent(baseEvent)
 }

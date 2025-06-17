@@ -38,6 +38,7 @@ export const KeyOpMap: { [key: number]: string } = {
   [constants.KindOpenresearchDiscussion]: constants.OpDiscussion,
   [constants.KindOpenresearchReadPaper]: constants.OpReadPaper,
   [constants.KindOpenresearchCoCreatePaper]: constants.OpCoCreatePaper,
+  [constants.KindOpenresearchSearch]: constants.OpSearch,
 
   // Social Actions operations
   [constants.KindSocialLike]: constants.OpLike,
